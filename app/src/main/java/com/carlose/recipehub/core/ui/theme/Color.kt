@@ -1,4 +1,4 @@
-package com.carlose.recipehub.ui.theme
+package com.carlose.recipehub.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
