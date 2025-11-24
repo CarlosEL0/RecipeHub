@@ -13,8 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.carlose.recipehub.core.ui.theme.RecipeHubTheme
 import androidx.compose.foundation.layout.Box
+import com.carlose.recipehub.core.navigation.AppNavigation
 import dagger.hilt.android.AndroidEntryPoint
-
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -22,20 +22,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            RecipeHubTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding) // <--- Aquí usamos el parámetro
-                    ) {
-                        Text(text = "¡Hola Recipe Hub! Hilt está funcionando.")
-                    }
-                }
+            // Forzamos el tema oscuro globalmente por ahora
+            RecipeHubTheme(darkTheme = true) {
+                AppNavigation()
             }
         }
     }
 }
+
 
 
 
