@@ -33,6 +33,8 @@ import com.carlose.recipehub.features.feed.presentation.HomeScreen
 import com.carlose.recipehub.features.feed.presentation.SearchScreen
 import com.carlose.recipehub.features.planner.presentation.PlannerScreen
 import com.carlose.recipehub.features.profile.presentation.ProfileScreen
+import com.carlose.recipehub.features.auth.presentation.login.LoginScreen
+import com.carlose.recipehub.features.auth.presentation.signup.SignUpScreen
 
 // Definimos los items de la barra de navegación
 data class BottomNavItem(
@@ -46,7 +48,10 @@ data class BottomNavItem(
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    // Lista de pantallas para la barra inferior
+    // Obtenemos la ruta actual para saber si ocultar la barra
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
     val items = listOf(
         BottomNavItem("Home", Screen.Home.route, Icons.Filled.Home, Icons.Outlined.Home),
         BottomNavItem("Buscar", Screen.Search.route, Icons.Filled.Search, Icons.Outlined.Search),
@@ -57,47 +62,65 @@ fun AppNavigation() {
 
     Scaffold(
         bottomBar = {
-            // Lógica para ocultar la barra en Login/Registro si estuviéramos ahí
-            NavigationBar(
-                containerColor = Color.Black, // Barra negra
-                contentColor = Color.White
-            ) {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
-
-                items.forEach { item ->
-                    val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
-
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = {
-                            navController.navigate(item.route) {
-                                // Esto evita que se acumulen pantallas al volver atrás
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+            // LÓGICA DE OCULTAR: Solo mostramos la barra si NO estamos en Login ni SignUp
+            if (currentRoute != Screen.Login.route && currentRoute != Screen.SignUp.route) {
+                NavigationBar(
+                    containerColor = Color.Black,
+                    contentColor = Color.White
+                ) {
+                    // ... (Mismo código de NavigationBar que tenías antes) ...
+                    val currentDestination = navBackStackEntry?.destination
+                    items.forEach { item ->
+                        val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                        NavigationBarItem(
+                            selected = isSelected,
+                            onClick = {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        label = { Text(item.title) },
-                        icon = {
-                            Icon(
-                                imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                                contentDescription = item.title
-                            )
-                        }
-                    )
+                            },
+                            label = { Text(item.title) },
+                            icon = { Icon(if (isSelected) item.selectedIcon else item.unselectedIcon, contentDescription = null) }
+                        )
+                    }
                 }
             }
         }
     ) { innerPadding ->
-        // Aquí es donde sucede la magia de cambiar pantallas
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            // CAMBIO IMPORTANTE: Ahora empezamos en Login
+            startDestination = Screen.Login.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            // --- AUTH GRAPH ---
+            composable(Screen.Login.route) {
+                LoginScreen(
+                    onLoginSuccess = {
+                        // Al hacer login, vamos a Home y borramos el historial para no volver a Login con "Atrás"
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) }
+                )
+            }
+            composable(Screen.SignUp.route) {
+                SignUpScreen(
+                    onSignUpSuccess = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToLogin = { navController.popBackStack() }
+                )
+            }
+
+            // --- MAIN GRAPH ---
             composable(Screen.Home.route) { HomeScreen() }
             composable(Screen.Search.route) { SearchScreen() }
             composable(Screen.CreateRecipe.route) { CreateRecipeScreen() }
