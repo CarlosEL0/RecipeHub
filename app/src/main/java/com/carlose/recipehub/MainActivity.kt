@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.carlose.recipehub.core.ui.theme.RecipeHubTheme
+import androidx.compose.foundation.layout.Box
 import dagger.hilt.android.AndroidEntryPoint
 
 
@@ -23,32 +24,18 @@ class MainActivity : ComponentActivity() {
         setContent {
             RecipeHubTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding) // <--- Aquí usamos el parámetro
+                    ) {
+                        Text(text = "¡Hola Recipe Hub! Hilt está funcionando.")
+                    }
                 }
             }
         }
     }
 }
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    RecipeHubTheme {
-        Greeting("Android")
-    }
-}
-
 
 
 
