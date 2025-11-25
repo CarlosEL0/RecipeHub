@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -96,6 +97,3 @@ fun RecipeGridItem(
         }
     }
 }
-
-// Helper simple para evitar imports manuales de size si falla
-private fun Modifier.size(dp: androidx.compose.ui.unit.Dp) = this.then(androidx.compose.foundation.layout.size(dp))
