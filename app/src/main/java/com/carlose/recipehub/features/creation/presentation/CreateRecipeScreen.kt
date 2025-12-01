@@ -1,5 +1,8 @@
 package com.carlose.recipehub.features.creation.presentation
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -24,6 +26,7 @@ import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,16 +39,18 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.carlose.recipehub.core.ui.components.RecipeHubTextField
 import com.carlose.recipehub.features.creation.presentation.create.CreateRecipeViewModel
 
@@ -58,6 +63,20 @@ fun CreateRecipeScreen(
     val description by viewModel.description.collectAsState()
     val time by viewModel.time.collectAsState()
     val portions by viewModel.portions.collectAsState()
+    val selectedImageUri by viewModel.selectedImageUri.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val uploadSuccess by viewModel.uploadSuccess.collectAsState()
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri -> viewModel.onImageSelected(uri) }
+    )
+
+    LaunchedEffect(uploadSuccess) {
+        if (uploadSuccess) {
+            // Aquí podrías navegar de vuelta al Home o limpiar el formulario
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -74,10 +93,15 @@ fun CreateRecipeScreen(
                 },
                 actions = {
                     Button(
-                        onClick = { },
+                        onClick = { viewModel.publishRecipe() },
+                        enabled = !isLoading,
                         modifier = Modifier.padding(end = 8.dp)
                     ) {
-                        Text("Publicar")
+                        if (isLoading) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                        } else {
+                            Text("Publicar")
+                        }
                     }
                 }
             )
@@ -97,18 +121,32 @@ fun CreateRecipeScreen(
                     .height(200.dp)
                     .background(Color(0xFF1E1E1E), RoundedCornerShape(12.dp))
                     .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
-                    .clickable { },
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable {
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.AddAPhoto,
+                if (selectedImageUri != null) {
+                    AsyncImage(
+                        model = selectedImageUri,
                         contentDescription = null,
-                        tint = Color.Gray,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Añadir Foto o Video", color = Color.Gray)
+                } else {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.AddAPhoto,
+                            contentDescription = null,
+                            tint = Color.Gray,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Añadir Foto", color = Color.Gray)
+                    }
                 }
             }
 
