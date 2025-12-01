@@ -35,8 +35,8 @@ import com.carlose.recipehub.features.planner.presentation.PlannerScreen
 import com.carlose.recipehub.features.profile.presentation.ProfileScreen
 import com.carlose.recipehub.features.auth.presentation.login.LoginScreen
 import com.carlose.recipehub.features.auth.presentation.signup.SignUpScreen
+import com.carlose.recipehub.features.feed.presentation.detail.RecipeDetailScreen
 
-// Definimos los items de la barra de navegación
 data class BottomNavItem(
     val title: String,
     val route: String,
@@ -48,7 +48,6 @@ data class BottomNavItem(
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    // Obtenemos la ruta actual para saber si ocultar la barra
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -62,13 +61,11 @@ fun AppNavigation() {
 
     Scaffold(
         bottomBar = {
-            // LÓGICA DE OCULTAR: Solo mostramos la barra si NO estamos en Login ni SignUp
             if (currentRoute != Screen.Login.route && currentRoute != Screen.SignUp.route) {
                 NavigationBar(
                     containerColor = Color.Black,
                     contentColor = Color.White
                 ) {
-                    // ... (Mismo código de NavigationBar que tenías antes) ...
                     val currentDestination = navBackStackEntry?.destination
                     items.forEach { item ->
                         val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
@@ -93,11 +90,9 @@ fun AppNavigation() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            // CAMBIO IMPORTANTE: Ahora empezamos en Login
             startDestination = Screen.Login.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            // --- AUTH GRAPH ---
             composable(Screen.Login.route) {
                 LoginScreen(
                     onLoginSuccess = {
@@ -120,12 +115,23 @@ fun AppNavigation() {
                 )
             }
 
-            // --- MAIN GRAPH ---
-            composable(Screen.Home.route) { HomeScreen() }
+            composable(Screen.Home.route) {
+                HomeScreen(
+                    onRecipeClick = { recipeId ->
+                        navController.navigate(Screen.RecipeDetail.createRoute(recipeId))
+                    }
+                )
+            }
             composable(Screen.Search.route) { SearchScreen() }
             composable(Screen.CreateRecipe.route) { CreateRecipeScreen() }
             composable(Screen.Planner.route) { PlannerScreen() }
             composable(Screen.Profile.route) { ProfileScreen() }
+
+            composable(Screen.RecipeDetail.route) {
+                RecipeDetailScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

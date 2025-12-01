@@ -27,6 +27,7 @@ import com.carlose.recipehub.features.feed.presentation.home.HomeViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    onRecipeClick: (Int) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val recipes by viewModel.recipes.collectAsState()
@@ -63,7 +64,7 @@ fun HomeScreen(
             } else {
                 LazyColumn {
                     items(recipes) { recipe ->
-                        RecipeCard(recipe = recipe, onRecipeClick = {})
+                        RecipeCard(recipe = recipe, onRecipeClick = onRecipeClick)
                     }
                 }
             }
