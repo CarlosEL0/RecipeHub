@@ -64,7 +64,11 @@ fun HomeScreen(
             } else {
                 LazyColumn {
                     items(recipes) { recipe ->
-                        RecipeCard(recipe = recipe, onRecipeClick = onRecipeClick)
+                        RecipeCard(
+                            recipe = recipe,
+                            onRecipeClick = onRecipeClick,
+                            onFavoriteClick = { viewModel.onFavoriteClick(recipe.id) }
+                        )
                     }
                 }
             }

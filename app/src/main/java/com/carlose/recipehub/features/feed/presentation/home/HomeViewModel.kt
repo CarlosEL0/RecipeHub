@@ -29,9 +29,30 @@ class HomeViewModel @Inject constructor(
     private fun loadRecipes() {
         viewModelScope.launch {
             _isLoading.value = true
-            val result = repository.getRecipes()
-            _recipes.value = result
+            _recipes.value = repository.getRecipes()
             _isLoading.value = false
+        }
+    }
+
+    fun onFavoriteClick(recipeId: Int) {
+        viewModelScope.launch {
+            updateLocalRecipeFavoriteStatus(recipeId)
+
+            val result = repository.toggleFavorite(recipeId, userId = 1)
+
+            result.onFailure {
+                updateLocalRecipeFavoriteStatus(recipeId)
+            }
+        }
+    }
+
+    private fun updateLocalRecipeFavoriteStatus(recipeId: Int) {
+        _recipes.value = _recipes.value.map { recipe ->
+            if (recipe.id == recipeId) {
+                recipe.copy(isFavorite = !recipe.isFavorite)
+            } else {
+                recipe
+            }
         }
     }
 }
