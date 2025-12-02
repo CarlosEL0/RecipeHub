@@ -54,6 +54,7 @@ import com.carlose.recipehub.features.planner.presentation.planner.PlannerViewMo
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlannerScreen(
+    onRecipeClick: (Int) -> Unit,
     viewModel: PlannerViewModel = hiltViewModel()
 ) {
     val days by viewModel.days.collectAsState()
@@ -76,7 +77,6 @@ fun PlannerScreen(
                 .background(Color(0xFF121212))
                 .padding(innerPadding)
         ) {
-            // Calendario Horizontal
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -89,16 +89,15 @@ fun PlannerScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Lista de Comidas
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item { MealSlot(title = "Desayuno", meal = plannedMeals.find { it.mealType == MealType.BREAKFAST }) }
-                item { MealSlot(title = "Almuerzo", meal = plannedMeals.find { it.mealType == MealType.LUNCH }) }
-                item { MealSlot(title = "Cena", meal = plannedMeals.find { it.mealType == MealType.DINNER }) }
-                item { MealSlot(title = "Snack", meal = plannedMeals.find { it.mealType == MealType.SNACK }) }
+                item { MealSlot(title = "Desayuno", meal = plannedMeals.find { it.mealType == MealType.BREAKFAST }, onRecipeClick = onRecipeClick) }
+                item { MealSlot(title = "Almuerzo", meal = plannedMeals.find { it.mealType == MealType.LUNCH }, onRecipeClick = onRecipeClick) }
+                item { MealSlot(title = "Cena", meal = plannedMeals.find { it.mealType == MealType.DINNER }, onRecipeClick = onRecipeClick) }
+                item { MealSlot(title = "Snack", meal = plannedMeals.find { it.mealType == MealType.SNACK }, onRecipeClick = onRecipeClick) }
             }
         }
     }
@@ -130,7 +129,7 @@ fun DayItem(day: DayState, onClick: () -> Unit) {
 }
 
 @Composable
-fun MealSlot(title: String, meal: MealPlanItem?) {
+fun MealSlot(title: String, meal: MealPlanItem?, onRecipeClick: (Int) -> Unit) {
     Column {
         Text(
             text = title,
@@ -144,7 +143,7 @@ fun MealSlot(title: String, meal: MealPlanItem?) {
             Card(
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().clickable { onRecipeClick(meal.recipe.id) }
             ) {
                 Row(
                     modifier = Modifier.padding(12.dp),
@@ -179,7 +178,6 @@ fun MealSlot(title: String, meal: MealPlanItem?) {
                 }
             }
         } else {
-            // Estado Vacío (Botón para agregar)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

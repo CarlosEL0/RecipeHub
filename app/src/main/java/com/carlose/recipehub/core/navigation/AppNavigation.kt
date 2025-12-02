@@ -124,8 +124,20 @@ fun AppNavigation() {
             }
             composable(Screen.Search.route) { SearchScreen() }
             composable(Screen.CreateRecipe.route) { CreateRecipeScreen() }
-            composable(Screen.Planner.route) { PlannerScreen() }
-            composable(Screen.Profile.route) { ProfileScreen() }
+            composable(Screen.Planner.route) {
+                PlannerScreen(
+                    onRecipeClick = { recipeId ->
+                        navController.navigate(Screen.RecipeDetail.createRoute(recipeId))
+                    }
+                )
+            }
+            composable(Screen.Profile.route) {
+                ProfileScreen(
+                    onRecipeClick = { recipeId ->
+                        navController.navigate(Screen.RecipeDetail.createRoute(recipeId))
+                    }
+                )
+            }
 
             composable(Screen.RecipeDetail.route) {
                 RecipeDetailScreen(

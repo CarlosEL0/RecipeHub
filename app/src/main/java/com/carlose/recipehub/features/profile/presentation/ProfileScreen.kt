@@ -49,6 +49,7 @@ import com.carlose.recipehub.features.profile.presentation.profile.ProfileViewMo
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
+    onRecipeClick: (Int) -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val user by viewModel.user.collectAsState()
@@ -119,7 +120,7 @@ fun ProfileScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(contentList) { recipe ->
-                    RecipeGridItem(recipe = recipe, onClick = { })
+                    RecipeGridItem(recipe = recipe, onClick = {onRecipeClick(recipe.id) })
                 }
             }
         }
