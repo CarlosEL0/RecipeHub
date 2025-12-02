@@ -11,7 +11,7 @@ class FeedRepository @Inject constructor(
 
     suspend fun getRecipes(): List<Recipe> {
         return try {
-            val response = api.getAllRecipes()
+            val response = api.getAllRecipes(userId = 1)
 
             if (response.isSuccessful && response.body() != null) {
                 response.body()!!.map { dto -> dto.toDomain() }
@@ -28,7 +28,6 @@ class FeedRepository @Inject constructor(
         return try {
             val response = api.toggleFavorite(recipeId, userId)
             if (response.isSuccessful && response.body() != null) {
-                // La API devuelve {"isFavorite": true/false}
                 Result.success(response.body()!!["isFavorite"] ?: false)
             } else {
                 Result.failure(Exception("Error al actualizar favorito"))
@@ -49,7 +48,7 @@ class FeedRepository @Inject constructor(
             publicationDate = this.publicationDate,
             authorName = this.authorName,
             authorId = this.authorId,
-            isFavorite = false
+            isFavorite = this.isFavorite
         )
     }
 }

@@ -24,6 +24,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.carlose.recipehub.core.ui.components.RecipeCard
 import com.carlose.recipehub.features.feed.presentation.home.HomeViewModel
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -32,6 +33,10 @@ fun HomeScreen(
 ) {
     val recipes by viewModel.recipes.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.loadRecipes()
+    }
 
     Scaffold(
         topBar = {

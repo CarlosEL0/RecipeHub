@@ -1,5 +1,6 @@
 package com.carlose.recipehub.core.network
 
+import com.google.gson.annotations.SerializedName
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -8,7 +9,7 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
-//import retrofit2.http.Query
+import retrofit2.http.Query
 
 data class LoginRequest(val email: String, val password: String)
 data class AuthResponseDto(val id: Int, val name: String, val email: String, val token: String)
@@ -40,7 +41,9 @@ data class RecipeResponseDto(
     val portions: Int,
     val authorName: String,
     val authorId: Int,
-    val publicationDate: String
+    val publicationDate: String,
+    @SerializedName("isFavorite")
+    val isFavorite: Boolean = false
 )
 
 data class RecipeDetailResponseDto(
@@ -57,6 +60,23 @@ data class RecipeDetailResponseDto(
     val steps: List<StepDto>
 )
 
+data class MealPlanRequest(
+    val userId: Int,
+    val recipeId: Int,
+    val date: String,
+    val mealType: String
+)
+
+data class MealPlanResponseDto(
+    val id: Int,
+    val date: String,
+    val mealType: String,
+    val recipeId: Int,
+    val recipeTitle: String,
+    val recipeImageUrl: String?,
+    val preparationTime: Int
+)
+
 interface RecipeHubApiService {
 
     @POST("api/v1/auth/login")
@@ -66,7 +86,7 @@ interface RecipeHubApiService {
     suspend fun register(@Body request: RegisterRequest): Response<UserResponseDto>
 
     @GET("api/v1/recipes")
-    suspend fun getAllRecipes(): Response<List<RecipeResponseDto>>
+    suspend fun getAllRecipes(@Query("userId") userId: Int): Response<List<RecipeResponseDto>>
 
     @GET("api/v1/recipes/{id}")
     suspend fun getRecipeById(@Path("id") id: Int): Response<RecipeDetailResponseDto>
@@ -83,4 +103,17 @@ interface RecipeHubApiService {
         @Path("id") recipeId: Int,
         @Query("userId") userId: Int
     ): Response<Map<String, Boolean>>
+
+    @POST("api/v1/planner")
+    suspend fun addToPlan(@Body request: MealPlanRequest): Response<MealPlanResponseDto>
+
+    @GET("api/v1/planner")
+    suspend fun getWeeklyPlan(
+        @Query("userId") userId: Int,
+        @Query("startDate") startDate: String,
+        @Query("endDate") endDate: String
+    ): Response<List<MealPlanResponseDto>>
+
+    @retrofit2.http.DELETE("api/v1/planner/{id}")
+    suspend fun removeFromPlan(@Path("id") planId: Int): Response<Void>
 }

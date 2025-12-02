@@ -38,7 +38,8 @@ import com.carlose.recipehub.core.model.Recipe
 @Composable
 fun RecipeCard(
     recipe: Recipe,
-    onRecipeClick: (Int) -> Unit
+    onRecipeClick: (Int) -> Unit,
+    onFavoriteClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier
@@ -90,7 +91,7 @@ fun RecipeCard(
                     .fillMaxWidth()
                     .padding(horizontal = 4.dp)
             ) {
-                IconButton(onClick = { }) {
+                IconButton(onClick = onFavoriteClick) {
                     Icon(
                         imageVector = if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = null,

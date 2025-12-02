@@ -26,7 +26,7 @@ class HomeViewModel @Inject constructor(
         loadRecipes()
     }
 
-    private fun loadRecipes() {
+    fun loadRecipes() {
         viewModelScope.launch {
             _isLoading.value = true
             _recipes.value = repository.getRecipes()
