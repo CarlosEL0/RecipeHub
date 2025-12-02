@@ -77,6 +77,16 @@ data class MealPlanResponseDto(
     val preparationTime: Int
 )
 
+data class CommentRequest(val userId: Int, val text: String)
+
+data class CommentResponseDto(
+    val id: Int,
+    val text: String,
+    val authorName: String,
+    val authorProfileUrl: String?,
+    val createdAt: String
+)
+
 interface RecipeHubApiService {
 
     @POST("api/v1/auth/login")
@@ -116,4 +126,10 @@ interface RecipeHubApiService {
 
     @retrofit2.http.DELETE("api/v1/planner/{id}")
     suspend fun removeFromPlan(@Path("id") planId: Int): Response<Void>
+
+    @GET("api/v1/recipes/{id}/comments")
+    suspend fun getComments(@Path("id") recipeId: Int): Response<List<CommentResponseDto>>
+
+    @POST("api/v1/recipes/{id}/comments")
+    suspend fun addComment(@Path("id") recipeId: Int, @Body request: CommentRequest): Response<CommentResponseDto>
 }

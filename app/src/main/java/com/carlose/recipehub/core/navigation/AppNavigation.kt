@@ -54,8 +54,18 @@ fun AppNavigation() {
     val items = listOf(
         BottomNavItem("Home", Screen.Home.route, Icons.Filled.Home, Icons.Outlined.Home),
         BottomNavItem("Buscar", Screen.Search.route, Icons.Filled.Search, Icons.Outlined.Search),
-        BottomNavItem("Crear", Screen.CreateRecipe.route, Icons.Filled.AddCircle, Icons.Outlined.AddCircle),
-        BottomNavItem("Plan", Screen.Planner.route, Icons.Filled.DateRange, Icons.Outlined.DateRange),
+        BottomNavItem(
+            "Crear",
+            Screen.CreateRecipe.route,
+            Icons.Filled.AddCircle,
+            Icons.Outlined.AddCircle
+        ),
+        BottomNavItem(
+            "Plan",
+            Screen.Planner.route,
+            Icons.Filled.DateRange,
+            Icons.Outlined.DateRange
+        ),
         BottomNavItem("Perfil", Screen.Profile.route, Icons.Filled.Person, Icons.Outlined.Person)
     )
 
@@ -68,7 +78,8 @@ fun AppNavigation() {
                 ) {
                     val currentDestination = navBackStackEntry?.destination
                     items.forEach { item ->
-                        val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                        val isSelected =
+                            currentDestination?.hierarchy?.any { it.route == item.route } == true
                         NavigationBarItem(
                             selected = isSelected,
                             onClick = {
@@ -81,7 +92,12 @@ fun AppNavigation() {
                                 }
                             },
                             label = { Text(item.title) },
-                            icon = { Icon(if (isSelected) item.selectedIcon else item.unselectedIcon, contentDescription = null) }
+                            icon = {
+                                Icon(
+                                    if (isSelected) item.selectedIcon else item.unselectedIcon,
+                                    contentDescription = null
+                                )
+                            }
                         )
                     }
                 }
