@@ -32,7 +32,7 @@ class RecipeDetailRepository @Inject constructor(
             description = this.description,
             preparationTimeMinutes = this.preparationTime,
             portions = this.portions,
-            imageUrl = null,
+            imageUrl = this.imageUrl,
             publicationDate = this.publicationDate,
             authorName = this.authorName,
             authorId = 0,

@@ -48,6 +48,7 @@ data class RecipeDetailResponseDto(
     val description: String,
     val preparationTime: Int,
     val portions: Int,
+    val imageUrl: String?,
     val authorName: String,
     val publicationDate: String,
     val categories: List<String>,
