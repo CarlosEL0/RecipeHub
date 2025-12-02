@@ -24,6 +24,20 @@ class FeedRepository @Inject constructor(
         }
     }
 
+    suspend fun toggleFavorite(recipeId: Int, userId: Int): Result<Boolean> {
+        return try {
+            val response = api.toggleFavorite(recipeId, userId)
+            if (response.isSuccessful && response.body() != null) {
+                // La API devuelve {"isFavorite": true/false}
+                Result.success(response.body()!!["isFavorite"] ?: false)
+            } else {
+                Result.failure(Exception("Error al actualizar favorito"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun RecipeResponseDto.toDomain(): Recipe {
         return Recipe(
             id = this.id,

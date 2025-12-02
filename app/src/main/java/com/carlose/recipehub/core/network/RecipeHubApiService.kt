@@ -8,6 +8,7 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
+//import retrofit2.http.Query
 
 data class LoginRequest(val email: String, val password: String)
 data class AuthResponseDto(val id: Int, val name: String, val email: String, val token: String)
@@ -76,4 +77,10 @@ interface RecipeHubApiService {
     @Multipart
     @POST("api/v1/media/upload")
     suspend fun uploadImage(@Part file: MultipartBody.Part): Response<ImageUploadResponse>
+
+    @POST("api/v1/favorites/{id}")
+    suspend fun toggleFavorite(
+        @Path("id") recipeId: Int,
+        @Query("userId") userId: Int
+    ): Response<Map<String, Boolean>>
 }
