@@ -1,12 +1,13 @@
 package com.carlose.recipehub.features.planner.presentation.planner
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.carlose.recipehub.core.model.MealPlanItem
-import com.carlose.recipehub.core.model.MealType
-import com.carlose.recipehub.core.model.Recipe
+import com.carlose.recipehub.features.planner.data.PlannerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
@@ -20,7 +21,9 @@ data class DayState(
 )
 
 @HiltViewModel
-class PlannerViewModel @Inject constructor() : ViewModel() {
+class PlannerViewModel @Inject constructor(
+    private val repository: PlannerRepository
+) : ViewModel() {
 
     private val _days = MutableStateFlow<List<DayState>>(emptyList())
     val days = _days.asStateFlow()
@@ -31,9 +34,11 @@ class PlannerViewModel @Inject constructor() : ViewModel() {
     private val _plannedMeals = MutableStateFlow<List<MealPlanItem>>(emptyList())
     val plannedMeals = _plannedMeals.asStateFlow()
 
+    private var fullWeeklyPlan: List<MealPlanItem> = emptyList()
+
     init {
         generateDays()
-        loadMockData()
+        loadWeeklyPlan()
     }
 
     private fun generateDays() {
@@ -53,29 +58,24 @@ class PlannerViewModel @Inject constructor() : ViewModel() {
     fun selectDate(date: LocalDate) {
         _selectedDate.value = date
         _days.value = _days.value.map { it.copy(isSelected = it.date == date) }
-        // Aquí filtraríamos las comidas reales por fecha
+        filterMealsForSelectedDate()
     }
 
-    private fun loadMockData() {
-        // Datos falsos para probar la UI
-        val today = LocalDate.now().toString()
+    private fun loadWeeklyPlan() {
+        val start = LocalDate.now()
+        val end = start.plusDays(14) // Cargamos 2 semanas
 
-        val mockRecipe = Recipe(
-            id = 1,
-            title = "Avena con Frutas",
-            description = "Desayuno",
-            preparationTimeMinutes = 15,
-            portions = 1,
-            imageUrl = "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?q=80&w=1000",
-            publicationDate = "2025-01-01",
-            authorName = "Yo",
-            authorId = 1
-        )
+        viewModelScope.launch {
+            val result = repository.getWeeklyPlan(start, end)
+            result.onSuccess { items ->
+                fullWeeklyPlan = items
+                filterMealsForSelectedDate()
+            }
+        }
+    }
 
-        _plannedMeals.value = listOf(
-            MealPlanItem(1, today, MealType.BREAKFAST, mockRecipe),
-            MealPlanItem(2, today, MealType.LUNCH, mockRecipe.copy(title = "Pollo con Verduras", imageUrl = "https://images.unsplash.com/photo-1588315029754-2dd089d39a1a?q=80&w=1000")),
-            MealPlanItem(3, today, MealType.DINNER, mockRecipe.copy(title = "Ensalada Ligera", imageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1000"))
-        )
+    private fun filterMealsForSelectedDate() {
+        val selected = _selectedDate.value.toString()
+        _plannedMeals.value = fullWeeklyPlan.filter { it.date == selected }
     }
 }
