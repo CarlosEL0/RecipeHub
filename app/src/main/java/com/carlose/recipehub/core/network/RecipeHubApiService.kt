@@ -132,4 +132,7 @@ interface RecipeHubApiService {
 
     @POST("api/v1/recipes/{id}/comments")
     suspend fun addComment(@Path("id") recipeId: Int, @Body request: CommentRequest): Response<CommentResponseDto>
+
+    @GET("api/v1/recipes/search")
+    suspend fun searchRecipes(@Query("query") query: String): Response<List<RecipeResponseDto>>
 }
