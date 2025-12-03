@@ -39,7 +39,8 @@ import com.carlose.recipehub.core.model.Recipe
 fun RecipeCard(
     recipe: Recipe,
     onRecipeClick: (Int) -> Unit,
-    onFavoriteClick: () -> Unit = {}
+    onFavoriteClick: () -> Unit = {onRecipeClick(recipe.id)},
+    onCommentClick: () -> Unit = {onRecipeClick(recipe.id)}
 ) {
     Card(
         modifier = Modifier
@@ -98,7 +99,7 @@ fun RecipeCard(
                         tint = if (recipe.isFavorite) Color.Red else Color.White
                     )
                 }
-                IconButton(onClick = { }) {
+                IconButton(onClick = onCommentClick) {
                     Icon(Icons.Outlined.Comment, contentDescription = null, tint = Color.White)
                 }
                 IconButton(onClick = { }) {

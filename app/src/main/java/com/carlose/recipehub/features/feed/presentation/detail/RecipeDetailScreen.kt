@@ -9,19 +9,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,9 +39,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.carlose.recipehub.core.network.CommentResponseDto
 
 @Composable
 fun RecipeDetailScreen(
@@ -45,6 +50,9 @@ fun RecipeDetailScreen(
 ) {
     val recipeDetail by viewModel.recipeDetail.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val comments by viewModel.comments.collectAsState()
+    val commentText by viewModel.commentText.collectAsState()
+    val isSendingComment by viewModel.isSendingComment.collectAsState()
 
     Scaffold(
         containerColor = Color(0xFF121212)
@@ -64,9 +72,9 @@ fun RecipeDetailScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
+                    .padding(bottom = 16.dp)
             ) {
                 Box(modifier = Modifier.height(300.dp).fillMaxWidth()) {
-
                     AsyncImage(
                         model = recipe.imageUrl ?: "",
                         contentDescription = null,
@@ -74,9 +82,7 @@ fun RecipeDetailScreen(
                         contentScale = ContentScale.Crop
                     )
 
-                    Box(modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.3f)))
+                    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f)))
 
                     IconButton(
                         onClick = onBackClick,
@@ -105,7 +111,6 @@ fun RecipeDetailScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Info rápida
                     Row(modifier = Modifier.fillMaxWidth()) {
                         InfoChip(icon = Icons.Default.Schedule, text = "${recipe.preparationTimeMinutes} min")
                         Spacer(modifier = Modifier.width(16.dp))
@@ -114,37 +119,20 @@ fun RecipeDetailScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Text(
-                        text = "Descripción",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(text = "Descripción", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = recipe.description,
-                        color = Color.LightGray,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    Text(text = recipe.description, color = Color.LightGray)
 
                     Spacer(modifier = Modifier.height(24.dp))
                     Divider(color = Color.DarkGray)
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Text(
-                        text = "Ingredientes",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(text = "Ingredientes", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     detail.ingredients.forEach { ingredient ->
                         Row(modifier = Modifier.padding(vertical = 4.dp)) {
                             Text("• ", color = Color(0xFF6200EE), fontWeight = FontWeight.Bold)
-                            Text(
-                                text = "${ingredient.name} (${ingredient.quantity})",
-                                color = Color.LightGray
-                            )
+                            Text(text = "${ingredient.name} (${ingredient.quantity})", color = Color.LightGray)
                         }
                     }
 
@@ -152,29 +140,55 @@ fun RecipeDetailScreen(
                     Divider(color = Color.DarkGray)
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Text(
-                        text = "Preparación",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(text = "Preparación", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     detail.steps.forEach { step ->
                         Row(modifier = Modifier.padding(vertical = 8.dp)) {
-                            Text(
-                                text = "${step.stepNumber}.",
-                                color = Color(0xFF6200EE),
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.width(24.dp)
-                            )
-                            Text(
-                                text = step.description,
-                                color = Color.LightGray
-                            )
+                            Text(text = "${step.stepNumber}.", color = Color(0xFF6200EE), fontWeight = FontWeight.Bold, modifier = Modifier.width(24.dp))
+                            Text(text = step.description, color = Color.LightGray)
                         }
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))
+                    Divider(color = Color.DarkGray)
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text(text = "Comentarios (${comments.size})", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedTextField(
+                            value = commentText,
+                            onValueChange = viewModel::onCommentTextChanged,
+                            placeholder = { Text("Escribe un comentario...") },
+                            modifier = Modifier.weight(1f),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                focusedBorderColor = Color(0xFF6200EE),
+                                unfocusedBorderColor = Color.Gray
+                            )
+                        )
+                        IconButton(
+                            onClick = { viewModel.sendComment() },
+                            enabled = !isSendingComment && commentText.isNotBlank()
+                        ) {
+                            if (isSendingComment) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                            } else {
+                                Icon(Icons.Default.Send, contentDescription = "Enviar", tint = if (commentText.isNotBlank()) Color(0xFF6200EE) else Color.Gray)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    comments.forEach { comment ->
+                        CommentItem(comment)
+                    }
                 }
             }
         }
@@ -191,5 +205,26 @@ fun InfoChip(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String
     ) {
         Icon(imageVector = icon, contentDescription = null, tint = Color.Gray, modifier = Modifier.padding(end = 4.dp))
         Text(text = text, color = Color.White)
+    }
+}
+
+@Composable
+fun CommentItem(comment: CommentResponseDto) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(Color.Gray),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = comment.authorName.first().uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = comment.authorName, color = Color.White, fontWeight = FontWeight.Bold)
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(text = comment.text, color = Color.LightGray, modifier = Modifier.padding(start = 40.dp))
     }
 }

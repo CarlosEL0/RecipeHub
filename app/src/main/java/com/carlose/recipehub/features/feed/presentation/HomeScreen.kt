@@ -72,7 +72,8 @@ fun HomeScreen(
                         RecipeCard(
                             recipe = recipe,
                             onRecipeClick = onRecipeClick,
-                            onFavoriteClick = { viewModel.onFavoriteClick(recipe.id) }
+                            onFavoriteClick = { viewModel.onFavoriteClick(recipe.id) },
+                            onCommentClick = { onRecipeClick(recipe.id) }
                         )
                     }
                 }
