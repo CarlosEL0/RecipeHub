@@ -2,6 +2,7 @@ package com.carlose.recipehub.features.creation.presentation.create
 
 import android.content.Context
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -50,10 +51,11 @@ class CreateRecipeViewModel @Inject constructor(
     val steps = mutableStateListOf<StepState>()
 
     init {
-        addIngredient()
-        addStep()
+        if (ingredients.isEmpty()) addIngredient()
+        if (steps.isEmpty()) addStep()
     }
 
+    // ... (Setters y helpers de listas se quedan igual) ...
     fun onTitleChange(value: String) { _title.value = value }
     fun onDescriptionChange(value: String) { _description.value = value }
     fun onTimeChange(value: String) { _time.value = value }
@@ -70,41 +72,66 @@ class CreateRecipeViewModel @Inject constructor(
     fun updateStepDescription(index: Int, value: String) { steps[index] = steps[index].copy(description = value) }
 
     fun publishRecipe() {
-        if (_selectedImageUri.value == null) return
+        // 1. VALIDACIONES BÁSICAS
+        if (_title.value.isBlank()) {
+            showToast("El título es obligatorio")
+            return
+        }
+
+        // 2. VALIDACIÓN DE NÚMERO (TIEMPO)
+        val timeInt = _time.value.toIntOrNull()
+        if (timeInt == null || timeInt <= 0) {
+            showToast("El tiempo debe ser un número válido (minutos)")
+            return
+        }
+
+        val portionsInt = _portions.value.toIntOrNull() ?: 1 // Por defecto 1 si está vacío
 
         viewModelScope.launch {
             _isLoading.value = true
 
-            val file = FileUtil.getFileFromUri(context, _selectedImageUri.value!!)
-            if (file != null) {
-                val imageResult = repository.uploadImage(file)
+            var finalImageUrl = ""
 
-                imageResult.onSuccess { imageUrl ->
-                    val request = CreateRecipeRequest(
-                        userId = 1,
-                        title = _title.value,
-                        description = _description.value,
-                        preparationTime = _time.value.toIntOrNull() ?: 0,
-                        portions = _portions.value.toIntOrNull() ?: 0,
-                        imageUrl = imageUrl,
-                        categories = listOf("General"),
-                        steps = steps.map { it.description },
-                        ingredients = ingredients.map { IngredientDto(it.name, it.quantity) }
-                    )
-
-                    val createResult = repository.createRecipe(request)
-                    createResult.onSuccess {
-                        _uploadSuccess.value = true
-                        _isLoading.value = false
-                    }.onFailure {
-                        _isLoading.value = false
+            // 3. MANEJO DE IMAGEN (OPCIONAL)
+            if (_selectedImageUri.value != null) {
+                // Si hay imagen, la subimos primero
+                val file = FileUtil.getFileFromUri(context, _selectedImageUri.value!!)
+                if (file != null) {
+                    val imageResult = repository.uploadImage(file)
+                    if (imageResult.isSuccess) {
+                        finalImageUrl = imageResult.getOrDefault("")
+                    } else {
+                        showToast("Error al subir imagen, se guardará sin foto")
                     }
-                }.onFailure {
-                    _isLoading.value = false
                 }
-            } else {
-                _isLoading.value = false
             }
+
+            // 4. CREAR LA RECETA (Con o sin URL de imagen)
+            val request = CreateRecipeRequest(
+                userId = 1,
+                title = _title.value,
+                description = _description.value,
+                preparationTime = timeInt,
+                portions = portionsInt,
+                imageUrl = finalImageUrl, // Enviamos la URL (o cadena vacía)
+                categories = listOf("General"),
+                steps = steps.map { it.description }.filter { it.isNotBlank() },
+                ingredients = ingredients.map { IngredientDto(it.name, it.quantity) }.filter { it.name.isNotBlank() }
+            )
+
+            val createResult = repository.createRecipe(request)
+            createResult.onSuccess {
+                showToast("¡Receta publicada!")
+                _uploadSuccess.value = true
+            }.onFailure {
+                showToast("Error al publicar: ${it.message}")
+            }
+
+            _isLoading.value = false
         }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 }

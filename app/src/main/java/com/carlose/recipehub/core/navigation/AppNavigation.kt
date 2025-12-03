@@ -156,6 +156,7 @@ fun AppNavigation() {
                     }
                 )
             }
+
             composable(Screen.Planner.route) {
                 PlannerScreen(
                     onRecipeClick = { recipeId ->
