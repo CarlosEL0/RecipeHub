@@ -135,4 +135,7 @@ interface RecipeHubApiService {
 
     @GET("api/v1/recipes/search")
     suspend fun searchRecipes(@Query("query") query: String): Response<List<RecipeResponseDto>>
+
+    @GET("api/v1/recipes/author/{userId}")
+    suspend fun getMyRecipes(@Path("userId") userId: Int): Response<List<RecipeResponseDto>>
 }

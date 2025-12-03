@@ -3,8 +3,8 @@ package com.carlose.recipehub.features.profile.presentation.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlose.recipehub.core.model.Recipe
-import com.carlose.recipehub.core.model.User
 import com.carlose.recipehub.features.feed.data.FeedRepository
+import com.carlose.recipehub.features.profile.data.ProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,14 +13,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val repository: FeedRepository
+    private val profileRepository: ProfileRepository,
+    private val feedRepository: FeedRepository // Reusamos este para obtener favoritos (trae todas y filtramos)
 ) : ViewModel() {
-
-    private val _user = MutableStateFlow<User?>(null)
-    val user = _user.asStateFlow()
-
-    private val _selectedTabIndex = MutableStateFlow(0)
-    val selectedTabIndex = _selectedTabIndex.asStateFlow()
 
     private val _myRecipes = MutableStateFlow<List<Recipe>>(emptyList())
     val myRecipes = _myRecipes.asStateFlow()
@@ -28,26 +23,43 @@ class ProfileViewModel @Inject constructor(
     private val _favoriteRecipes = MutableStateFlow<List<Recipe>>(emptyList())
     val favoriteRecipes = _favoriteRecipes.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
+
+    private val _selectedTab = MutableStateFlow(0) // 0 = Mis Recetas, 1 = Favoritos
+    val selectedTab = _selectedTab.asStateFlow()
+
+    // Datos del usuario (Mock por ahora, idealmente vendrían de DataStore/Session)
+    val userName = "Carlos López"
+    val userEmail = "carlos@gmail.com"
+
     init {
-        loadProfileData()
-    }
-
-    private fun loadProfileData() {
-        _user.value = User(
-            id = 1,
-            name = "CarlosElo",
-            email = "carlos@test.com",
-            profilePictureUrl = "https://i.pravatar.cc/300"
-        )
-
-        viewModelScope.launch {
-            val allRecipes = repository.getRecipes()
-            _myRecipes.value = allRecipes.filter { it.authorId == 101 }
-            _favoriteRecipes.value = allRecipes.filter { it.isFavorite }
-        }
+        loadData()
     }
 
     fun onTabSelected(index: Int) {
-        _selectedTabIndex.value = index
+        _selectedTab.value = index
+    }
+
+    private fun loadData() {
+        viewModelScope.launch {
+            _isLoading.value = true
+
+            // 1. Cargar Mis Recetas
+            val myResult = profileRepository.getMyRecipes()
+            myResult.onSuccess { _myRecipes.value = it }
+
+            // 2. Cargar Favoritos
+            // Estrategia simple: Pedimos todas al feed (que ya marca isFavorite=true) y filtramos localmente
+            // Una estrategia más eficiente sería un endpoint dedicado /users/favorites en el backend
+            val feedRecipes = feedRepository.getRecipes()
+            _favoriteRecipes.value = feedRecipes.filter { it.isFavorite }
+
+            _isLoading.value = false
+        }
+    }
+
+    fun logout() {
+        // Aquí limpiaríamos el DataStore y navegaríamos al Login
     }
 }
