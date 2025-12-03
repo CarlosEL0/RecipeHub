@@ -43,6 +43,7 @@ import com.carlose.recipehub.features.feed.presentation.search.SearchViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
+    onRecipeClick: (Int) -> Unit,
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -118,7 +119,7 @@ fun SearchScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(searchResults) { recipe ->
-                        RecipeGridItem(recipe = recipe, onClick = { })
+                        RecipeGridItem(recipe = recipe, onClick = {recipe.id})
                     }
                 }
             }
@@ -145,4 +146,6 @@ fun CategoryChip(
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
         )
     }
+
+
 }
