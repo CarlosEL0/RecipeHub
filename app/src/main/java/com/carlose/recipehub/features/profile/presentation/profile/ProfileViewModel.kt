@@ -29,7 +29,6 @@ class ProfileViewModel @Inject constructor(
     private val _selectedTab = MutableStateFlow(0) // 0 = Mis Recetas, 1 = Favoritos
     val selectedTab = _selectedTab.asStateFlow()
 
-    // Datos del usuario (Mock por ahora, idealmente vendrían de DataStore/Session)
     val userName = "Carlos López"
     val userEmail = "carlos@gmail.com"
 
@@ -41,17 +40,14 @@ class ProfileViewModel @Inject constructor(
         _selectedTab.value = index
     }
 
-    private fun loadData() {
+    fun loadData() {
         viewModelScope.launch {
             _isLoading.value = true
 
-            // 1. Cargar Mis Recetas
             val myResult = profileRepository.getMyRecipes()
             myResult.onSuccess { _myRecipes.value = it }
 
-            // 2. Cargar Favoritos
-            // Estrategia simple: Pedimos todas al feed (que ya marca isFavorite=true) y filtramos localmente
-            // Una estrategia más eficiente sería un endpoint dedicado /users/favorites en el backend
+
             val feedRecipes = feedRepository.getRecipes()
             _favoriteRecipes.value = feedRecipes.filter { it.isFavorite }
 

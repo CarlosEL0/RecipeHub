@@ -57,6 +57,9 @@ import com.carlose.recipehub.features.creation.presentation.create.CreateRecipeV
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateRecipeScreen(
+    // 1. Definimos los DOS parámetros necesarios
+    onRecipeCreated: () -> Unit,
+    onCloseClick: () -> Unit,
     viewModel: CreateRecipeViewModel = hiltViewModel()
 ) {
     val title by viewModel.title.collectAsState()
@@ -72,9 +75,10 @@ fun CreateRecipeScreen(
         onResult = { uri -> viewModel.onImageSelected(uri) }
     )
 
+    // 2. Reaccionamos al éxito
     LaunchedEffect(uploadSuccess) {
         if (uploadSuccess) {
-            // Aquí podrías navegar de vuelta al Home o limpiar el formulario
+            onRecipeCreated()
         }
     }
 
@@ -87,7 +91,8 @@ fun CreateRecipeScreen(
                     titleContentColor = Color.White
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { }) {
+                    // 3. Conectamos el botón Cerrar
+                    IconButton(onClick = onCloseClick) {
                         Icon(Icons.Default.Close, contentDescription = null, tint = Color.White)
                     }
                 },
@@ -107,6 +112,7 @@ fun CreateRecipeScreen(
             )
         }
     ) { innerPadding ->
+        // ... (El resto del contenido del formulario se mantiene idéntico) ...
         Column(
             modifier = Modifier
                 .fillMaxSize()

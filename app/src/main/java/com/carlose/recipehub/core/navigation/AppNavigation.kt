@@ -143,7 +143,19 @@ fun AppNavigation() {
                     navController.navigate(Screen.RecipeDetail.createRoute(recipeId))
                 }
             ) }
-            composable(Screen.CreateRecipe.route) { CreateRecipeScreen() }
+
+            composable(Screen.CreateRecipe.route) {
+                CreateRecipeScreen(
+                    onRecipeCreated = {
+                        navController.navigate(Screen.Profile.route) {
+                            popUpTo(Screen.Home.route)
+                        }
+                    },
+                    onCloseClick = {
+                        navController.popBackStack()
+                    }
+                )
+            }
             composable(Screen.Planner.route) {
                 PlannerScreen(
                     onRecipeClick = { recipeId ->
@@ -155,7 +167,8 @@ fun AppNavigation() {
                 ProfileScreen(
                     onRecipeClick = { recipeId ->
                         navController.navigate(Screen.RecipeDetail.createRoute(recipeId))
-                    }
+                    },
+                    onLogout = {}
                 )
             }
 
