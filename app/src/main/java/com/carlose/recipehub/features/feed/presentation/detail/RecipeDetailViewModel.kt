@@ -3,23 +3,30 @@ package com.carlose.recipehub.features.feed.presentation.detail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.carlose.recipehub.core.model.MealType
 import com.carlose.recipehub.core.model.RecipeDetail
 import com.carlose.recipehub.core.network.CommentResponseDto
 import com.carlose.recipehub.features.feed.data.CommentRepository
 import com.carlose.recipehub.features.feed.data.RecipeDetailRepository
+// 1. Agregar import del PlannerRepository
+import com.carlose.recipehub.features.planner.data.PlannerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
 class RecipeDetailViewModel @Inject constructor(
     private val repository: RecipeDetailRepository,
     private val commentRepository: CommentRepository,
+    // 2. Inyectar el repositorio del planificador
+    private val plannerRepository: PlannerRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
+    // ... (Variables existentes: recipeDetail, isLoading, comments...) ...
     private val _recipeDetail = MutableStateFlow<RecipeDetail?>(null)
     val recipeDetail = _recipeDetail.asStateFlow()
 
@@ -34,6 +41,13 @@ class RecipeDetailViewModel @Inject constructor(
 
     private val _isSendingComment = MutableStateFlow(false)
     val isSendingComment = _isSendingComment.asStateFlow()
+
+    // 3. Variables nuevas para el Diálogo de Planificación
+    private val _showPlannerDialog = MutableStateFlow(false)
+    val showPlannerDialog = _showPlannerDialog.asStateFlow()
+
+    private val _isAddingToPlan = MutableStateFlow(false)
+    val isAddingToPlan = _isAddingToPlan.asStateFlow()
 
     private var currentRecipeId: Int? = null
 
@@ -62,22 +76,43 @@ class RecipeDetailViewModel @Inject constructor(
         }
     }
 
-    fun onCommentTextChanged(text: String) {
-        _commentText.value = text
-    }
+    fun onCommentTextChanged(text: String) { _commentText.value = text }
 
     fun sendComment() {
         if (_commentText.value.isBlank() || currentRecipeId == null) return
-
         viewModelScope.launch {
             _isSendingComment.value = true
             val result = commentRepository.addComment(currentRecipeId!!, _commentText.value)
-
             result.onSuccess { newComment ->
                 _comments.value = listOf(newComment) + _comments.value
                 _commentText.value = ""
             }
             _isSendingComment.value = false
+        }
+    }
+
+    // --- 4. Funciones Nuevas para Planificador ---
+
+    fun openPlannerDialog() {
+        _showPlannerDialog.value = true
+    }
+
+    fun closePlannerDialog() {
+        _showPlannerDialog.value = false
+    }
+
+    fun addToPlan(date: LocalDate, mealType: MealType) {
+        if (currentRecipeId == null) return
+
+        viewModelScope.launch {
+            _isAddingToPlan.value = true
+            val result = plannerRepository.addToPlan(currentRecipeId!!, date, mealType)
+
+            result.onSuccess {
+                _showPlannerDialog.value = false
+                // Aquí podrías mostrar un Toast de éxito o navegar al planner
+            }
+            _isAddingToPlan.value = false
         }
     }
 }
