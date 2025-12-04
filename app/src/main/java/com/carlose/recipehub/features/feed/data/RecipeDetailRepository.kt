@@ -46,4 +46,13 @@ class RecipeDetailRepository @Inject constructor(
             categories = this.categories.map { Category(0, it) }
         )
     }
+
+    suspend fun deleteRecipe(id: Int): Result<Boolean> {
+        return try {
+            val response = api.deleteRecipe(id)
+            if (response.isSuccessful) Result.success(true) else Result.failure(Exception("Error al borrar"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

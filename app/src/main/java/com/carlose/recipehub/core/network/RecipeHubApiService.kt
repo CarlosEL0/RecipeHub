@@ -138,4 +138,11 @@ interface RecipeHubApiService {
 
     @GET("api/v1/recipes/author/{userId}")
     suspend fun getMyRecipes(@Path("userId") userId: Int): Response<List<RecipeResponseDto>>
+
+    // ...
+    @retrofit2.http.PUT("api/v1/recipes/{id}")
+    suspend fun updateRecipe(@Path("id") id: Int, @Body request: CreateRecipeRequest): Response<RecipeResponseDto>
+
+    @retrofit2.http.DELETE("api/v1/recipes/{id}")
+    suspend fun deleteRecipe(@Path("id") id: Int): Response<Void>
 }
