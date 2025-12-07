@@ -14,9 +14,12 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,16 +29,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.carlose.recipehub.core.ui.components.RecipeHubTextField
 
 @Composable
 fun SignUpScreen(
     onSignUpSuccess: () -> Unit,
-    onNavigateToLogin: () -> Unit
+    onNavigateToLogin: () -> Unit,
+    viewModel: SignUpViewModel = hiltViewModel() // Inyectamos el ViewModel
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val signUpSuccess by viewModel.signUpSuccess.collectAsState()
+
+    // Solo navegamos si la API responde con éxito
+    LaunchedEffect(signUpSuccess) {
+        if (signUpSuccess) {
+            onSignUpSuccess()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -74,13 +90,24 @@ fun SignUpScreen(
             icon = Icons.Default.Lock
         )
 
+        if (error != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = error!!, color = Color.Red)
+        }
+
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = onSignUpSuccess,
+            // Conectamos el botón al ViewModel
+            onClick = { viewModel.register(name, email, password) },
+            enabled = !isLoading,
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
-            Text(text = "Registrarse")
+            if (isLoading) {
+                CircularProgressIndicator(color = Color.White)
+            } else {
+                Text(text = "Registrarse")
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))

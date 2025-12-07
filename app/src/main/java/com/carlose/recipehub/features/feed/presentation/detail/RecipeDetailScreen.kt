@@ -38,24 +38,22 @@ fun RecipeDetailScreen(
     onBackClick: () -> Unit,
     viewModel: RecipeDetailViewModel = hiltViewModel()
 ) {
+    val isAuthor by viewModel.isAuthor.collectAsState()
     val recipeDetail by viewModel.recipeDetail.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val comments by viewModel.comments.collectAsState()
     val commentText by viewModel.commentText.collectAsState()
     val isSendingComment by viewModel.isSendingComment.collectAsState()
 
-    // Estados del Planificador
     val showPlannerDialog by viewModel.showPlannerDialog.collectAsState()
     val isAddingToPlan by viewModel.isAddingToPlan.collectAsState()
 
-    // --- NUEVO: Estados para Eliminar ---
     val deleteSuccess by viewModel.deleteSuccess.collectAsState()
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    // 1. Reacción al borrado exitoso
     LaunchedEffect(deleteSuccess) {
         if (deleteSuccess) {
-            onBackClick() // Salimos de la pantalla si se borró
+            onBackClick()
         }
     }
 
@@ -118,7 +116,6 @@ fun RecipeDetailScreen(
 
                     Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f)))
 
-                    // Botón Atrás (Izquierda)
                     IconButton(
                         onClick = onBackClick,
                         modifier = Modifier
@@ -129,14 +126,12 @@ fun RecipeDetailScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = Color.White)
                     }
 
-                    // --- NUEVO: Fila de Botones (Derecha) ---
                     Row(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(top = 48.dp, end = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Botón Planificador
                         IconButton(
                             onClick = viewModel::openPlannerDialog,
                             modifier = Modifier
@@ -145,14 +140,13 @@ fun RecipeDetailScreen(
                             Icon(Icons.Default.DateRange, contentDescription = "Agendar", tint = Color.White)
                         }
 
-                        // Botón Eliminar
-                        // Nota: Aquí podrías ocultarlo si no eres el autor (if recipe.authorId == userId)
-                        IconButton(
-                            onClick = { showDeleteDialog = true },
-                            modifier = Modifier
-                                .background(Color.Red.copy(alpha = 0.9f), RoundedCornerShape(50))
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Color.White)
+                        if (isAuthor) {
+                            IconButton(
+                                onClick = { showDeleteDialog = true },
+                                modifier = Modifier.background(Color.Red.copy(alpha = 0.9f), RoundedCornerShape(50))
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Color.White)
+                            }
                         }
                     }
                 }

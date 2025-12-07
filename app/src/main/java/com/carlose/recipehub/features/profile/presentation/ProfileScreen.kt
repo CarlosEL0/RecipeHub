@@ -58,7 +58,7 @@ fun ProfileScreen(
     val favoriteRecipes by viewModel.favoriteRecipes.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val selectedTab by viewModel.selectedTab.collectAsState()
-
+    val currentUser by viewModel.currentUser.collectAsState()
     val contentList = if (selectedTab == 0) myRecipes else favoriteRecipes
 
     LaunchedEffect(Unit) {
@@ -73,7 +73,6 @@ fun ProfileScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // --- Cabecera del Perfil ---
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -96,22 +95,24 @@ fun ProfileScreen(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = viewModel.userName,
+                    text = currentUser?.name ?: "Cargando...",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
                 Text(
-                    text = viewModel.userEmail,
+                    text = currentUser?.email ?: "",
                     color = Color.Gray,
                     fontSize = 14.sp
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Botón Cerrar Sesión (Visual)
                 Button(
-                    onClick = onLogout,
+                    onClick = {
+                        viewModel.logout()
+                        onLogout()
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C2C2C))
                 ) {
                     Icon(Icons.Default.ExitToApp, contentDescription = null, tint = Color.Red, modifier = Modifier.size(16.dp))
@@ -120,7 +121,6 @@ fun ProfileScreen(
                 }
             }
 
-            // --- Pestañas ---
             TabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = Color.Transparent,

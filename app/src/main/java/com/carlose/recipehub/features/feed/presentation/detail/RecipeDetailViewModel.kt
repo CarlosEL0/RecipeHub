@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.carlose.recipehub.core.model.MealType
 import com.carlose.recipehub.core.model.RecipeDetail
 import com.carlose.recipehub.core.network.CommentResponseDto
+import com.carlose.recipehub.core.session.SessionManager
 import com.carlose.recipehub.features.feed.data.CommentRepository
 import com.carlose.recipehub.features.feed.data.RecipeDetailRepository
 import com.carlose.recipehub.features.planner.data.PlannerRepository
@@ -46,12 +47,12 @@ class RecipeDetailViewModel @Inject constructor(
     private val _isAddingToPlan = MutableStateFlow(false)
     val isAddingToPlan = _isAddingToPlan.asStateFlow()
 
-    // --- NUEVO: Estado para saber si se borró exitosamente ---
     private val _deleteSuccess = MutableStateFlow(false)
     val deleteSuccess = _deleteSuccess.asStateFlow()
-    // --------------------------------------------------------
-
     private var currentRecipeId: Int? = null
+
+    private val _isAuthor = MutableStateFlow(false)
+    val isAuthor = _isAuthor.asStateFlow()
 
     init {
         val recipeId = savedStateHandle.get<String>("recipeId")?.toIntOrNull()
@@ -66,7 +67,10 @@ class RecipeDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             val result = repository.getRecipeDetail(id)
-            result.onSuccess { _recipeDetail.value = it }
+            result.onSuccess { detail -> _recipeDetail.value = detail
+                val currentUserId = SessionManager.getUserId()
+                _isAuthor.value = (detail.recipe.authorId == currentUserId)
+            }
             _isLoading.value = false
         }
     }
