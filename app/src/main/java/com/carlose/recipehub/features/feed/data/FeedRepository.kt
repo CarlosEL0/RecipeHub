@@ -3,6 +3,7 @@ package com.carlose.recipehub.features.feed.data
 import com.carlose.recipehub.core.model.Recipe
 import com.carlose.recipehub.core.network.RecipeHubApiService
 import com.carlose.recipehub.core.network.RecipeResponseDto
+import com.carlose.recipehub.core.session.SessionManager
 import javax.inject.Inject
 
 class FeedRepository @Inject constructor(
@@ -11,7 +12,9 @@ class FeedRepository @Inject constructor(
 
     suspend fun getRecipes(): List<Recipe> {
         return try {
-            val response = api.getAllRecipes(userId = 1)
+            val userId = SessionManager.getUserId()
+            val response = api.getAllRecipes(userId = userId)
+
 
             if (response.isSuccessful && response.body() != null) {
                 response.body()!!.map { dto -> dto.toDomain() }

@@ -1,17 +1,21 @@
 package com.carlose.recipehub.features.profile.data
 
+import android.se.omapi.Session
 import com.carlose.recipehub.core.model.Recipe
 import com.carlose.recipehub.core.network.RecipeHubApiService
 import com.carlose.recipehub.core.network.RecipeResponseDto
+import com.carlose.recipehub.core.session.SessionManager
 import javax.inject.Inject
-
 class ProfileRepository @Inject constructor(
     private val api: RecipeHubApiService
 ) {
     suspend fun getMyRecipes(): Result<List<Recipe>> {
         return try {
             // Usamos userId = 1 hardcoded por ahora
-            val response = api.getMyRecipes(userId = 1)
+            val currentUserId = SessionManager.getUserId()
+            if (currentUserId == -1) return Result.failure(Exception("No hay sesión"))
+
+            val response = api.getMyRecipes(userId = currentUserId)
 
             if (response.isSuccessful && response.body() != null) {
                 val recipes = response.body()!!.map { it.toDomain() }
@@ -24,7 +28,6 @@ class ProfileRepository @Inject constructor(
         }
     }
 
-    // Necesitamos el helper de conversión aquí también o moverlo a un Mapper común
     private fun RecipeResponseDto.toDomain(): Recipe {
         return Recipe(
             id = this.id,

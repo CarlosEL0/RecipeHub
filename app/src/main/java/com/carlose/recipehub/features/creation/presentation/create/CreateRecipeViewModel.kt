@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlose.recipehub.core.network.CreateRecipeRequest
 import com.carlose.recipehub.core.network.IngredientDto
+import com.carlose.recipehub.core.session.SessionManager
 import com.carlose.recipehub.core.util.FileUtil
 import com.carlose.recipehub.features.creation.data.CreateRecipeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -108,7 +109,7 @@ class CreateRecipeViewModel @Inject constructor(
 
             // 4. CREAR LA RECETA (Con o sin URL de imagen)
             val request = CreateRecipeRequest(
-                userId = 1,
+                userId = SessionManager.getUserId(),
                 title = _title.value,
                 description = _description.value,
                 preparationTime = timeInt,

@@ -3,6 +3,7 @@ package com.carlose.recipehub.features.profile.presentation.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlose.recipehub.core.model.Recipe
+import com.carlose.recipehub.core.session.SessionManager
 import com.carlose.recipehub.features.feed.data.FeedRepository
 import com.carlose.recipehub.features.profile.data.ProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,8 +30,8 @@ class ProfileViewModel @Inject constructor(
     private val _selectedTab = MutableStateFlow(0) // 0 = Mis Recetas, 1 = Favoritos
     val selectedTab = _selectedTab.asStateFlow()
 
-    val userName = "Carlos López"
-    val userEmail = "carlos@gmail.com"
+    val userName = SessionManager.getCurrentUser()?.name ?: "Usuario"
+    val userEmail = SessionManager.getCurrentUser()?.email ?: ""
 
     init {
         loadData()
