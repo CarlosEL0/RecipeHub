@@ -8,7 +8,6 @@ import com.carlose.recipehub.core.model.RecipeDetail
 import com.carlose.recipehub.core.network.CommentResponseDto
 import com.carlose.recipehub.features.feed.data.CommentRepository
 import com.carlose.recipehub.features.feed.data.RecipeDetailRepository
-// 1. Agregar import del PlannerRepository
 import com.carlose.recipehub.features.planner.data.PlannerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,12 +20,10 @@ import javax.inject.Inject
 class RecipeDetailViewModel @Inject constructor(
     private val repository: RecipeDetailRepository,
     private val commentRepository: CommentRepository,
-    // 2. Inyectar el repositorio del planificador
     private val plannerRepository: PlannerRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    // ... (Variables existentes: recipeDetail, isLoading, comments...) ...
     private val _recipeDetail = MutableStateFlow<RecipeDetail?>(null)
     val recipeDetail = _recipeDetail.asStateFlow()
 
@@ -42,12 +39,17 @@ class RecipeDetailViewModel @Inject constructor(
     private val _isSendingComment = MutableStateFlow(false)
     val isSendingComment = _isSendingComment.asStateFlow()
 
-    // 3. Variables nuevas para el Diálogo de Planificación
+    // Variables para el Planificador
     private val _showPlannerDialog = MutableStateFlow(false)
     val showPlannerDialog = _showPlannerDialog.asStateFlow()
 
     private val _isAddingToPlan = MutableStateFlow(false)
     val isAddingToPlan = _isAddingToPlan.asStateFlow()
+
+    // --- NUEVO: Estado para saber si se borró exitosamente ---
+    private val _deleteSuccess = MutableStateFlow(false)
+    val deleteSuccess = _deleteSuccess.asStateFlow()
+    // --------------------------------------------------------
 
     private var currentRecipeId: Int? = null
 
@@ -91,7 +93,7 @@ class RecipeDetailViewModel @Inject constructor(
         }
     }
 
-    // --- 4. Funciones Nuevas para Planificador ---
+    // --- Funciones para el Planificador ---
 
     fun openPlannerDialog() {
         _showPlannerDialog.value = true
@@ -110,9 +112,23 @@ class RecipeDetailViewModel @Inject constructor(
 
             result.onSuccess {
                 _showPlannerDialog.value = false
-                // Aquí podrías mostrar un Toast de éxito o navegar al planner
             }
             _isAddingToPlan.value = false
+        }
+    }
+
+    // --- NUEVO: Función para Eliminar Receta ---
+    fun deleteRecipe() {
+        if (currentRecipeId == null) return
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = repository.deleteRecipe(currentRecipeId!!)
+            result.onSuccess {
+                _deleteSuccess.value = true
+            }
+            // Si falla, quitamos el loading para que el usuario pueda reintentar
+            _isLoading.value = false
         }
     }
 }

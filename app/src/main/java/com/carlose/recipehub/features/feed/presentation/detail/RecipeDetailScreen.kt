@@ -1,6 +1,5 @@
 package com.carlose.recipehub.features.feed.presentation.detail
 
-// ... imports existentes ...
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete // <--- Nuevo Import
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Send
@@ -31,6 +31,7 @@ import com.carlose.recipehub.core.network.CommentResponseDto
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeDetailScreen(
@@ -47,11 +48,43 @@ fun RecipeDetailScreen(
     val showPlannerDialog by viewModel.showPlannerDialog.collectAsState()
     val isAddingToPlan by viewModel.isAddingToPlan.collectAsState()
 
+    // --- NUEVO: Estados para Eliminar ---
+    val deleteSuccess by viewModel.deleteSuccess.collectAsState()
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    // 1. Reacción al borrado exitoso
+    LaunchedEffect(deleteSuccess) {
+        if (deleteSuccess) {
+            onBackClick() // Salimos de la pantalla si se borró
+        }
+    }
+
+    // 2. Diálogo de Planificador
     if (showPlannerDialog) {
         AddToPlannerDialog(
             onDismiss = viewModel::closePlannerDialog,
             onConfirm = { date, type -> viewModel.addToPlan(date, type) },
             isLoading = isAddingToPlan
+        )
+    }
+
+    // 3. Diálogo de Confirmación de Borrado
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            containerColor = Color(0xFF1E1E1E),
+            title = { Text("¿Eliminar receta?", color = Color.White, fontWeight = FontWeight.Bold) },
+            text = { Text("Esta acción no se puede deshacer.", color = Color.Gray) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.deleteRecipe() }) {
+                    Text("Eliminar", color = Color.Red, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancelar", color = Color.White)
+                }
+            }
         )
     }
 
@@ -85,7 +118,7 @@ fun RecipeDetailScreen(
 
                     Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f)))
 
-                    // Botón Atrás
+                    // Botón Atrás (Izquierda)
                     IconButton(
                         onClick = onBackClick,
                         modifier = Modifier
@@ -96,22 +129,36 @@ fun RecipeDetailScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = Color.White)
                     }
 
-                    // --- NUEVO: Botón Planificador ---
-                    IconButton(
-                        onClick = viewModel::openPlannerDialog,
+                    // --- NUEVO: Fila de Botones (Derecha) ---
+                    Row(
                         modifier = Modifier
-                            .padding(top = 48.dp, end = 16.dp)
                             .align(Alignment.TopEnd)
-                            .background(Color(0xFF6200EE), RoundedCornerShape(50)) // Morado para resaltar
+                            .padding(top = 48.dp, end = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Default.DateRange, contentDescription = "Agendar", tint = Color.White)
+                        // Botón Planificador
+                        IconButton(
+                            onClick = viewModel::openPlannerDialog,
+                            modifier = Modifier
+                                .background(Color(0xFF6200EE), RoundedCornerShape(50))
+                        ) {
+                            Icon(Icons.Default.DateRange, contentDescription = "Agendar", tint = Color.White)
+                        }
+
+                        // Botón Eliminar
+                        // Nota: Aquí podrías ocultarlo si no eres el autor (if recipe.authorId == userId)
+                        IconButton(
+                            onClick = { showDeleteDialog = true },
+                            modifier = Modifier
+                                .background(Color.Red.copy(alpha = 0.9f), RoundedCornerShape(50))
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Color.White)
+                        }
                     }
                 }
 
-                // ... (El resto del contenido: Título, Chips, Descripción, Ingredientes, Pasos, Comentarios)
-                // ... (Copia el resto del código de la versión anterior aquí, no cambia nada abajo)
-
                 Column(modifier = Modifier.padding(16.dp)) {
+                    // ... (Todo el contenido de textos e ingredientes sigue igual) ...
                     Text(text = recipe.title, style = MaterialTheme.typography.headlineMedium, color = Color.White, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(text = "Por ${recipe.authorName}", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
@@ -171,8 +218,6 @@ fun RecipeDetailScreen(
         }
     }
 }
-
-// --- Componentes Auxiliares ---
 
 @Composable
 fun AddToPlannerDialog(
@@ -262,7 +307,6 @@ fun MealTypeChip(label: String, type: MealType, selectedType: MealType, onClick:
     }
 }
 
-// ... InfoChip y CommentItem (que ya tenías) ...
 @Composable
 fun InfoChip(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
     Row(
