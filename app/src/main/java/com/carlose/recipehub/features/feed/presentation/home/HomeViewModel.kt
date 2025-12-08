@@ -3,6 +3,7 @@ package com.carlose.recipehub.features.feed.presentation.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlose.recipehub.core.model.Recipe
+import com.carlose.recipehub.core.session.SessionManager
 import com.carlose.recipehub.features.feed.data.FeedRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,7 +39,8 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             updateLocalRecipeFavoriteStatus(recipeId)
 
-            val result = repository.toggleFavorite(recipeId, userId = 1)
+            val currentUserId = SessionManager.getUserId()
+            val result = repository.toggleFavorite(recipeId, userId = currentUserId)
 
             result.onFailure {
                 updateLocalRecipeFavoriteStatus(recipeId)

@@ -5,6 +5,7 @@ import com.carlose.recipehub.core.model.MealType
 import com.carlose.recipehub.core.model.Recipe
 import com.carlose.recipehub.core.network.MealPlanRequest
 import com.carlose.recipehub.core.network.RecipeHubApiService
+import com.carlose.recipehub.core.session.SessionManager
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -14,8 +15,11 @@ class PlannerRepository @Inject constructor(
 
     suspend fun getWeeklyPlan(startDate: LocalDate, endDate: LocalDate): Result<List<MealPlanItem>> {
         return try {
+            val userId = SessionManager.getUserId()
+            if (userId == -1) return Result.failure(Exception("Sesión inválida"))
+
             val response = api.getWeeklyPlan(
-                userId = 1, // Hardcoded por ahora
+                userId = userId,
                 startDate = startDate.toString(),
                 endDate = endDate.toString()
             )
@@ -50,8 +54,10 @@ class PlannerRepository @Inject constructor(
 
     suspend fun addToPlan(recipeId: Int, date: LocalDate, mealType: MealType): Result<Boolean> {
         return try {
+            val userId = SessionManager.getUserId()
+
             val request = MealPlanRequest(
-                userId = 1,
+                userId = userId,
                 recipeId = recipeId,
                 date = date.toString(),
                 mealType = mealType.name

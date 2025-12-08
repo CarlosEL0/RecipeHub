@@ -63,7 +63,7 @@ class PlannerViewModel @Inject constructor(
 
     private fun loadWeeklyPlan() {
         val start = LocalDate.now()
-        val end = start.plusDays(14) // Cargamos 2 semanas
+        val end = start.plusDays(14)
 
         viewModelScope.launch {
             val result = repository.getWeeklyPlan(start, end)
