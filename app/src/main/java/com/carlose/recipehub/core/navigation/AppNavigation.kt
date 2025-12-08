@@ -173,9 +173,20 @@ fun AppNavigation() {
                 )
             }
 
-            composable(Screen.RecipeDetail.route) {
+            composable(Screen.RecipeDetail.route) {backStackEntry ->
+                val recipeId = backStackEntry.arguments?.getString("recipeId")?.toIntOrNull() ?: 0
                 RecipeDetailScreen(
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onEditClick = { id -> navController.navigate("edit_recipe/$id") }
+                )
+            }
+
+            composable("edit_recipe/{recipeId}") {
+                CreateRecipeScreen(
+                    onRecipeCreated = {
+                        navController.popBackStack()
+                    },
+                    onCloseClick = { navController.popBackStack() }
                 )
             }
         }

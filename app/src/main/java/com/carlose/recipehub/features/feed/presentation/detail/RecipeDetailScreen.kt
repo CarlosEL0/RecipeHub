@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete // <--- Nuevo Import
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Send
@@ -36,6 +37,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun RecipeDetailScreen(
     onBackClick: () -> Unit,
+    onEditClick: (Int) -> Unit = {},
     viewModel: RecipeDetailViewModel = hiltViewModel()
 ) {
     val isAuthor by viewModel.isAuthor.collectAsState()
@@ -57,7 +59,6 @@ fun RecipeDetailScreen(
         }
     }
 
-    // 2. Diálogo de Planificador
     if (showPlannerDialog) {
         AddToPlannerDialog(
             onDismiss = viewModel::closePlannerDialog,
@@ -66,7 +67,6 @@ fun RecipeDetailScreen(
         )
     }
 
-    // 3. Diálogo de Confirmación de Borrado
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -142,6 +142,12 @@ fun RecipeDetailScreen(
 
                         if (isAuthor) {
                             IconButton(
+                                onClick = { onEditClick(recipe.id) },
+                                modifier = Modifier.background(Color.Gray.copy(alpha = 0.8f), RoundedCornerShape(50))
+                            ) {
+                                Icon(Icons.Default.Edit, contentDescription = "Editar", tint = Color.White)
+                            }
+                            IconButton(
                                 onClick = { showDeleteDialog = true },
                                 modifier = Modifier.background(Color.Red.copy(alpha = 0.9f), RoundedCornerShape(50))
                             ) {
@@ -152,7 +158,6 @@ fun RecipeDetailScreen(
                 }
 
                 Column(modifier = Modifier.padding(16.dp)) {
-                    // ... (Todo el contenido de textos e ingredientes sigue igual) ...
                     Text(text = recipe.title, style = MaterialTheme.typography.headlineMedium, color = Color.White, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(text = "Por ${recipe.authorName}", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
@@ -244,7 +249,6 @@ fun AddToPlannerDialog(
                 Text("Tipo de comida:", color = Color.Gray, fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Chips para tipo de comida
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     MealTypeChip("Desayuno", MealType.BREAKFAST, selectedMealType) { selectedMealType = it }
                     MealTypeChip("Almuerzo", MealType.LUNCH, selectedMealType) { selectedMealType = it }
