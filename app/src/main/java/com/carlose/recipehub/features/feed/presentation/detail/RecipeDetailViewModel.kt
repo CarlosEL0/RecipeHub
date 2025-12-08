@@ -40,7 +40,6 @@ class RecipeDetailViewModel @Inject constructor(
     private val _isSendingComment = MutableStateFlow(false)
     val isSendingComment = _isSendingComment.asStateFlow()
 
-    // Variables para el Planificador
     private val _showPlannerDialog = MutableStateFlow(false)
     val showPlannerDialog = _showPlannerDialog.asStateFlow()
 
@@ -97,7 +96,6 @@ class RecipeDetailViewModel @Inject constructor(
         }
     }
 
-    // --- Funciones para el Planificador ---
 
     fun openPlannerDialog() {
         _showPlannerDialog.value = true
@@ -121,7 +119,6 @@ class RecipeDetailViewModel @Inject constructor(
         }
     }
 
-    // --- NUEVO: Función para Eliminar Receta ---
     fun deleteRecipe() {
         if (currentRecipeId == null) return
 
@@ -131,7 +128,6 @@ class RecipeDetailViewModel @Inject constructor(
             result.onSuccess {
                 _deleteSuccess.value = true
             }
-            // Si falla, quitamos el loading para que el usuario pueda reintentar
             _isLoading.value = false
         }
     }

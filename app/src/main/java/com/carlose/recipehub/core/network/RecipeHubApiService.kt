@@ -54,6 +54,7 @@ data class RecipeDetailResponseDto(
     val portions: Int,
     val imageUrl: String?,
     val authorName: String,
+    val authorId: Int,
     val publicationDate: String,
     val categories: List<String>,
     val ingredients: List<IngredientDto>,
