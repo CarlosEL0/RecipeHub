@@ -1,6 +1,7 @@
 package com.carlose.recipehub.features.creation.data
 
 import com.carlose.recipehub.core.network.CreateRecipeRequest
+import com.carlose.recipehub.core.network.RecipeDetailResponseDto
 import com.carlose.recipehub.core.network.RecipeHubApiService
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -35,6 +36,32 @@ class CreateRecipeRepository @Inject constructor(
                 Result.success(true)
             } else {
                 Result.failure(Exception("Error al crear receta"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateRecipe(recipeId: Int, request: CreateRecipeRequest): Result<Boolean> {
+        return try {
+            val response = api.updateRecipe(recipeId, request)
+            if (response.isSuccessful) {
+                Result.success(true)
+            } else {
+                Result.failure(Exception("Error al actualizar receta"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getRecipeForEdit(recipeId: Int): Result<RecipeDetailResponseDto> {
+        return try {
+            val response = api.getRecipeById(recipeId)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("Error al cargar datos"))
             }
         } catch (e: Exception) {
             Result.failure(e)

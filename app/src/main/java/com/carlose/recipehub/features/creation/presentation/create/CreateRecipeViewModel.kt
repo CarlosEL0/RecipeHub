@@ -4,11 +4,13 @@ import android.content.Context
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlose.recipehub.core.network.CreateRecipeRequest
 import com.carlose.recipehub.core.network.IngredientDto
 import com.carlose.recipehub.core.session.SessionManager
+import com.carlose.recipehub.core.network.RecipeDetailResponseDto
 import com.carlose.recipehub.core.util.FileUtil
 import com.carlose.recipehub.features.creation.data.CreateRecipeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,13 +20,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+
 data class IngredientState(val id: Long = System.currentTimeMillis(), var name: String = "", var quantity: String = "")
 data class StepState(val id: Long = System.currentTimeMillis(), var description: String = "")
 
 @HiltViewModel
 class CreateRecipeViewModel @Inject constructor(
     private val repository: CreateRecipeRepository,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _title = MutableStateFlow("")
@@ -51,12 +55,25 @@ class CreateRecipeViewModel @Inject constructor(
     val ingredients = mutableStateListOf<IngredientState>()
     val steps = mutableStateListOf<StepState>()
 
+    private var editingRecipeId: Int? = null
+
     init {
         if (ingredients.isEmpty()) addIngredient()
         if (steps.isEmpty()) addStep()
     }
 
-    // ... (Setters y helpers de listas se quedan igual) ...
+    init {
+        val recipeId = savedStateHandle.get<String>("recipeId")?.toIntOrNull()
+        if (recipeId != null) {
+            editingRecipeId = recipeId
+            loadRecipeForEdit(recipeId)
+        } else {
+            // Modo Crear: Inicializamos listas vacías
+            if (ingredients.isEmpty()) addIngredient()
+            if (steps.isEmpty()) addStep()
+        }
+    }
+
     fun onTitleChange(value: String) { _title.value = value }
     fun onDescriptionChange(value: String) { _description.value = value }
     fun onTimeChange(value: String) { _time.value = value }
@@ -72,60 +89,81 @@ class CreateRecipeViewModel @Inject constructor(
     fun removeStep(index: Int) { if (steps.size > 1) steps.removeAt(index) }
     fun updateStepDescription(index: Int, value: String) { steps[index] = steps[index].copy(description = value) }
 
+    private fun loadRecipeForEdit(id: Int) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = repository.getRecipeForEdit(id)
+
+            result.onSuccess { dto ->
+                _title.value = dto.title
+                _description.value = dto.description
+                _time.value = dto.preparationTime.toString()
+                _portions.value = dto.portions.toString()
+
+                ingredients.clear()
+                dto.ingredients.forEach {
+                    ingredients.add(IngredientState(name = it.name, quantity = it.quantity))
+                }
+
+                steps.clear()
+                dto.steps.forEach {
+                    steps.add(StepState(description = it.description))
+                }
+            }
+            _isLoading.value = false
+        }
+    }
+
     fun publishRecipe() {
-        // 1. VALIDACIONES BÁSICAS
         if (_title.value.isBlank()) {
             showToast("El título es obligatorio")
             return
         }
 
-        // 2. VALIDACIÓN DE NÚMERO (TIEMPO)
         val timeInt = _time.value.toIntOrNull()
         if (timeInt == null || timeInt <= 0) {
             showToast("El tiempo debe ser un número válido (minutos)")
             return
         }
 
-        val portionsInt = _portions.value.toIntOrNull() ?: 1 // Por defecto 1 si está vacío
+        val portionsInt = _portions.value.toIntOrNull() ?: 1
 
         viewModelScope.launch {
             _isLoading.value = true
 
-            var finalImageUrl = ""
+            var imageUrl = ""
 
-            // 3. MANEJO DE IMAGEN (OPCIONAL)
             if (_selectedImageUri.value != null) {
-                // Si hay imagen, la subimos primero
                 val file = FileUtil.getFileFromUri(context, _selectedImageUri.value!!)
                 if (file != null) {
                     val imageResult = repository.uploadImage(file)
-                    if (imageResult.isSuccess) {
-                        finalImageUrl = imageResult.getOrDefault("")
-                    } else {
-                        showToast("Error al subir imagen, se guardará sin foto")
-                    }
+                    if (imageResult.isSuccess) imageUrl = imageResult.getOrDefault("")
                 }
             }
 
-            // 4. CREAR LA RECETA (Con o sin URL de imagen)
             val request = CreateRecipeRequest(
                 userId = SessionManager.getUserId(),
                 title = _title.value,
                 description = _description.value,
                 preparationTime = timeInt,
                 portions = portionsInt,
-                imageUrl = finalImageUrl, // Enviamos la URL (o cadena vacía)
+                imageUrl = imageUrl,
                 categories = listOf("General"),
                 steps = steps.map { it.description }.filter { it.isNotBlank() },
                 ingredients = ingredients.map { IngredientDto(it.name, it.quantity) }.filter { it.name.isNotBlank() }
             )
 
-            val createResult = repository.createRecipe(request)
-            createResult.onSuccess {
-                showToast("¡Receta publicada!")
+            val result = if (editingRecipeId != null) {
+                repository.updateRecipe(editingRecipeId!!, request)
+            } else {
+                repository.createRecipe(request)
+            }
+
+            result.onSuccess {
+                showToast(if (editingRecipeId != null) "Receta actualizada" else "Receta publicada")
                 _uploadSuccess.value = true
             }.onFailure {
-                showToast("Error al publicar: ${it.message}")
+                showToast("Error: ${it.message}")
             }
 
             _isLoading.value = false
@@ -135,4 +173,5 @@ class CreateRecipeViewModel @Inject constructor(
     private fun showToast(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
+
 }
